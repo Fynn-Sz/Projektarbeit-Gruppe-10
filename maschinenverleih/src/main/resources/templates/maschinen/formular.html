@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Maschine – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite" th:with="neu=${maschineId == null}">
+    <nav class="brotkrumen" aria-label="Brotkrumen">
+        <ol>
+            <li><a th:href="@{/maschinen}">Maschinen</a></li>
+            <li aria-current="page" th:text="${neu} ? 'Neue Maschine' : ${formular.inventarnummer}">Neue Maschine</li>
+        </ol>
+    </nav>
+
+    <div class="seitenkopf">
+        <div>
+            <span class="ueberzeile" th:text="${neu} ? 'Anlegen' : 'Bearbeiten'">Anlegen</span>
+            <h1 th:text="${neu} ? 'Neue Maschine anlegen' : 'Maschine bearbeiten'">Neue Maschine anlegen</h1>
+            <p>Pflichtfelder sind mit <span class="pflicht">*</span> markiert. Die Inventarnummer muss eindeutig sein.</p>
+        </div>
+        <div class="aktionen" th:unless="${neu}">
+            <a class="btn btn-zweit" th:href="@{/maschinen/{id}/historie(id=${maschineId})}">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#historie"/></svg>
+                Historie ansehen
+            </a>
+        </div>
+    </div>
+
+    <form class="karte" th:object="${formular}" method="post" novalidate
+          th:action="${neu} ? @{/maschinen} : @{/maschinen/{id}(id=${maschineId})}">
+
+        <div th:if="${#fields.hasErrors('*')}" class="meldung meldung--fehler" role="alert" tabindex="-1" id="fehlerliste">
+            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#warnung"/></svg>
+            <div>
+                <strong>Bitte prüfen Sie Ihre Eingaben</strong>
+                <ul>
+                    <li th:each="e : ${#fields.globalErrors()}" th:text="${e}">Allgemeiner Fehler</li>
+                    <li th:each="e : ${#fields.detailedErrors()}" th:if="${!e.global}">
+                        <a th:href="'#' + ${e.fieldName}" th:text="${e.message}">Feldfehler</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <fieldset class="feldgruppe">
+            <legend>Grunddaten</legend>
+            <div class="formular-raster">
+                <div class="feld" th:classappend="${#fields.hasErrors('inventarnummer')} ? 'feld--fehler'">
+                    <label for="inventarnummer">Inventarnummer<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="text" th:field="*{inventarnummer}" required maxlength="20" placeholder="z. B. M-0104"
+                           autocomplete="off" aria-describedby="inventarnummer-hinweis inventarnummer-fehler"
+                           th:aria-invalid="${#fields.hasErrors('inventarnummer')} ? 'true'">
+                    <p class="feld-hinweis" id="inventarnummer-hinweis">Eindeutige Nummer, max. 20 Zeichen</p>
+                    <p class="feld-fehler" id="inventarnummer-fehler" th:if="${#fields.hasErrors('inventarnummer')}" th:errors="*{inventarnummer}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('bezeichnung')} ? 'feld--fehler'" style="grid-column: span 2">
+                    <label for="bezeichnung">Bezeichnung<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="text" th:field="*{bezeichnung}" required maxlength="100" placeholder="z. B. Radlader Volvo L30"
+                           aria-describedby="bezeichnung-fehler" th:aria-invalid="${#fields.hasErrors('bezeichnung')} ? 'true'">
+                    <p class="feld-fehler" id="bezeichnung-fehler" th:if="${#fields.hasErrors('bezeichnung')}" th:errors="*{bezeichnung}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('kategorieId')} ? 'feld--fehler'">
+                    <label for="kategorieId">Kategorie<span class="pflicht" aria-hidden="true">*</span></label>
+                    <select th:field="*{kategorieId}" required aria-describedby="kategorieId-fehler"
+                            th:aria-invalid="${#fields.hasErrors('kategorieId')} ? 'true'">
+                        <option value="">Bitte auswählen …</option>
+                        <option th:each="k : ${kategorien}" th:value="${k.id}" th:text="${k.name}">Bagger</option>
+                    </select>
+                    <p class="feld-fehler" id="kategorieId-fehler" th:if="${#fields.hasErrors('kategorieId')}" th:errors="*{kategorieId}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('standortId')} ? 'feld--fehler'">
+                    <label for="standortId">Standort<span class="pflicht" aria-hidden="true">*</span></label>
+                    <select th:field="*{standortId}" required aria-describedby="standortId-fehler"
+                            th:aria-invalid="${#fields.hasErrors('standortId')} ? 'true'">
+                        <option value="">Bitte auswählen …</option>
+                        <option th:each="s : ${standorte}" th:value="${s.id}" th:text="${s.name}">Bielefeld</option>
+                    </select>
+                    <p class="feld-fehler" id="standortId-fehler" th:if="${#fields.hasErrors('standortId')}" th:errors="*{standortId}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('hersteller')} ? 'feld--fehler'">
+                    <label for="hersteller">Hersteller</label>
+                    <input type="text" th:field="*{hersteller}" maxlength="50" placeholder="z. B. Volvo"
+                           aria-describedby="hersteller-fehler" th:aria-invalid="${#fields.hasErrors('hersteller')} ? 'true'">
+                    <p class="feld-fehler" id="hersteller-fehler" th:if="${#fields.hasErrors('hersteller')}" th:errors="*{hersteller}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('status')} ? 'feld--fehler'">
+                    <label for="status">Status<span class="pflicht" aria-hidden="true">*</span></label>
+                    <select th:field="*{status}" aria-describedby="status-hinweis">
+                        <option th:each="st : ${statuswerte}" th:value="${st}" th:text="${st.bezeichnung}">Verfügbar</option>
+                    </select>
+                    <p class="feld-hinweis" id="status-hinweis">Nur „Verfügbar“ kann reserviert werden</p>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="feldgruppe">
+            <legend>Technik &amp; Wartung</legend>
+            <div class="formular-raster">
+                <div class="feld" th:classappend="${#fields.hasErrors('baujahr')} ? 'feld--fehler'">
+                    <label for="baujahr">Baujahr<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="number" th:field="*{baujahr}" required min="1950" th:max="${#temporals.year(#temporals.createNow())}"
+                           inputmode="numeric" placeholder="z. B. 2020" aria-describedby="baujahr-hinweis baujahr-fehler"
+                           th:aria-invalid="${#fields.hasErrors('baujahr')} ? 'true'">
+                    <p class="feld-hinweis" id="baujahr-hinweis">Ab 1950, nicht in der Zukunft</p>
+                    <p class="feld-fehler" id="baujahr-fehler" th:if="${#fields.hasErrors('baujahr')}" th:errors="*{baujahr}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('betriebsstunden')} ? 'feld--fehler'">
+                    <label for="betriebsstunden">Betriebsstunden<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="number" th:field="*{betriebsstunden}" required min="0" inputmode="numeric" placeholder="z. B. 800"
+                           aria-describedby="betriebsstunden-fehler" th:aria-invalid="${#fields.hasErrors('betriebsstunden')} ? 'true'">
+                    <p class="feld-fehler" id="betriebsstunden-fehler" th:if="${#fields.hasErrors('betriebsstunden')}" th:errors="*{betriebsstunden}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('wartungsintervallStd')} ? 'feld--fehler'">
+                    <label for="wartungsintervallStd">Wartungsintervall (Std.)<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="number" th:field="*{wartungsintervallStd}" required min="1" inputmode="numeric" placeholder="z. B. 500"
+                           aria-describedby="wartungsintervallStd-hinweis wartungsintervallStd-fehler"
+                           th:aria-invalid="${#fields.hasErrors('wartungsintervallStd')} ? 'true'">
+                    <p class="feld-hinweis" id="wartungsintervallStd-hinweis">Wartung alle X Betriebsstunden</p>
+                    <p class="feld-fehler" id="wartungsintervallStd-fehler" th:if="${#fields.hasErrors('wartungsintervallStd')}" th:errors="*{wartungsintervallStd}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('garantieBis')} ? 'feld--fehler'">
+                    <label for="garantieBis">Garantie bis</label>
+                    <input type="date" th:field="*{garantieBis}" aria-describedby="garantieBis-fehler"
+                           th:aria-invalid="${#fields.hasErrors('garantieBis')} ? 'true'">
+                    <p class="feld-fehler" id="garantieBis-fehler" th:if="${#fields.hasErrors('garantieBis')}" th:errors="*{garantieBis}"></p>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="feldgruppe" style="margin-bottom:0">
+            <legend>Vermietung</legend>
+            <div class="formular-raster">
+                <div class="feld" th:classappend="${#fields.hasErrors('tagesmietpreis')} ? 'feld--fehler'">
+                    <label for="tagesmietpreis">Tagesmietpreis (€, netto)<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="number" th:field="*{tagesmietpreis}" required min="0" step="0.01" inputmode="decimal" placeholder="z. B. 95,00"
+                           aria-describedby="tagesmietpreis-fehler" th:aria-invalid="${#fields.hasErrors('tagesmietpreis')} ? 'true'">
+                    <p class="feld-fehler" id="tagesmietpreis-fehler" th:if="${#fields.hasErrors('tagesmietpreis')}" th:errors="*{tagesmietpreis}"></p>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="formular-fuss">
+            <a class="btn btn-zweit" th:href="@{/maschinen}">Abbrechen</a>
+            <button class="btn btn-primaer btn-gross" type="submit">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#haken"/></svg>
+                <span th:text="${neu} ? 'Maschine anlegen' : 'Änderungen speichern'">Maschine anlegen</span>
+            </button>
+        </div>
+    </form>
+</div>
+</body>
+</html>

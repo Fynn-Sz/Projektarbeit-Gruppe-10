@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Maschinen – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite">
+    <div class="seitenkopf">
+        <div>
+            <span class="ueberzeile">Stammdaten</span>
+            <h1>Maschinenbestand</h1>
+            <p>Alle Maschinen mit ihren Stammdaten. Jede Änderung wird mit Zeitpunkt und altem bzw. neuem Wert
+                in der Historie protokolliert.</p>
+        </div>
+        <div class="aktionen">
+            <a class="btn btn-zweit" th:href="@{/maschinen/import}">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#upload"/></svg>
+                Excel importieren
+            </a>
+            <a class="btn btn-primaer" th:href="@{/maschinen/neu}">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#plus"/></svg>
+                Maschine anlegen
+            </a>
+        </div>
+    </div>
+
+    <form class="filterleiste" th:action="@{/maschinen}" method="get" aria-label="Maschinen filtern">
+        <div class="feld">
+            <label for="filter-kategorie">Kategorie</label>
+            <select id="filter-kategorie" name="kategorieId">
+                <option value="">Alle Kategorien</option>
+                <option th:each="k : ${kategorien}" th:value="${k.id}" th:text="${k.name}"
+                        th:selected="${k.id == kategorieId}">Bagger</option>
+            </select>
+        </div>
+        <div class="feld">
+            <label for="filter-standort">Standort</label>
+            <select id="filter-standort" name="standortId">
+                <option value="">Alle Standorte</option>
+                <option th:each="s : ${standorte}" th:value="${s.id}" th:text="${s.name}"
+                        th:selected="${s.id == standortId}">Bielefeld</option>
+            </select>
+        </div>
+        <button class="btn btn-zweit" type="submit">Filtern</button>
+        <a class="btn btn-zweit" th:if="${kategorieId != null or standortId != null}" th:href="@{/maschinen}">Filter zurücksetzen</a>
+    </form>
+
+    <div th:if="${#lists.isEmpty(maschinen)}" class="leer">
+        <span class="leer-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#maschine"/></svg></span>
+        <h3>Keine Maschinen gefunden</h3>
+        <p>Legen Sie eine Maschine an oder übernehmen Sie Ihren Bestand per Excel-Import.</p>
+    </div>
+
+    <div class="tabelle-rahmen" th:unless="${#lists.isEmpty(maschinen)}">
+        <table class="tabelle">
+            <caption th:text="${#lists.size(maschinen)} + ' Maschine(n)'">3 Maschinen</caption>
+            <thead>
+            <tr>
+                <th scope="col">Inventar-Nr.</th>
+                <th scope="col">Maschine</th>
+                <th scope="col" class="rechts">Baujahr</th>
+                <th scope="col" class="rechts">Betriebsstd.</th>
+                <th scope="col" class="rechts">Preis / Tag</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="rechts"><span class="sr-only">Aktionen</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="m : ${maschinen}">
+                <td class="mono" th:text="${m.inventarnummer}">M-0001</td>
+                <td>
+                    <span class="zelle-titel" th:text="${m.bezeichnung}">Minibagger CAT 301.7</span>
+                    <span class="zelle-unter" th:text="${m.kategorie} + ' · ' + ${m.standort} + (${m.hersteller} != null ? ' · ' + ${m.hersteller} : '')">Bagger · Bielefeld · Caterpillar</span>
+                </td>
+                <td class="rechts zahl" th:text="${m.baujahr}">2019</td>
+                <td class="rechts zahl">
+                    <span class="zelle-titel" style="font-weight:500" th:text="${#numbers.formatInteger(m.betriebsstunden, 1, 'POINT')} + ' h'">1.250 h</span>
+                    <span class="zelle-unter" th:text="'Wartung alle ' + ${#numbers.formatInteger(m.wartungsintervallStd, 1, 'POINT')} + ' h'">Wartung alle 500 h</span>
+                </td>
+                <td class="rechts zahl" th:text="${#numbers.formatDecimal(m.tagesmietpreis, 1, 'POINT', 2, 'COMMA')} + ' €'">89,00 €</td>
+                <td><span class="plakette" th:classappend="${'status-' + #strings.toLowerCase(m.status.name())}"
+                          th:text="${m.status.bezeichnung}">Verfügbar</span></td>
+                <td class="knapp">
+                    <div class="zeilen-aktionen">
+                        <a class="icon-btn" th:href="@{/maschinen/{id}/bearbeiten(id=${m.id})}" th:title="${m.inventarnummer} + ' bearbeiten'">
+                            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#bearbeiten"/></svg>
+                            <span class="sr-only" th:text="${m.inventarnummer} + ' bearbeiten'">Bearbeiten</span>
+                        </a>
+                        <a class="icon-btn" th:href="@{/maschinen/{id}/historie(id=${m.id})}" th:title="'Historie von ' + ${m.inventarnummer}">
+                            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#historie"/></svg>
+                            <span class="sr-only" th:text="'Historie von ' + ${m.inventarnummer}">Historie</span>
+                        </a>
+                        <form method="post" th:action="@{/maschinen/{id}/loeschen(id=${m.id})}"
+                              data-rueckfrage-titel="Maschine löschen?" data-rueckfrage-knopf="Ja, löschen"
+                              th:attr="data-rueckfrage=${m.inventarnummer} + ' (' + ${m.bezeichnung} + ') wird dauerhaft gelöscht. Maschinen mit Reservierungen können nicht gelöscht werden – setzen Sie dann den Status auf „Außer Betrieb“.'">
+                            <button class="icon-btn icon-btn--gefahr" type="submit" th:title="${m.inventarnummer} + ' löschen'">
+                                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#loeschen"/></svg>
+                                <span class="sr-only" th:text="${m.inventarnummer} + ' löschen'">Löschen</span>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,82 @@
+# =====================================================================
+#  CI – Tests
+#  Baut das Projekt und führt alle Tests aus – bei jedem Push und bei
+#  jedem Pull Request. Schlägt ein Test fehl, wird der PR rot markiert
+#  und der Deploy (deploy.yml) startet NICHT.
+# =====================================================================
+name: Tests
+
+on:
+  push:
+    branches: ["**"]          # jeder Branch
+  pull_request:
+    branches: [main]          # PRs, die nach main sollen
+  workflow_dispatch:          # zusätzlich manuell startbar (Reiter "Actions")
+
+# Ein neuer Push auf denselben Branch bricht den noch laufenden alten Lauf ab
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build und Tests
+    runs-on: ubuntu-latest
+
+    # Die App liegt im Unterordner – alle "run"-Befehle laufen dort
+    defaults:
+      run:
+        working-directory: maschinenverleih
+
+    # Eigene, leere PostgreSQL nur für diesen Testlauf (wird danach weggeworfen).
+    # Der Test "contextLoads" startet die komplette App inkl. schema.sql und data.sql
+    # und prüft damit auch, ob unsere SQL-Skripte fehlerfrei laufen.
+    # Die Zugangsdaten sind reine Wegwerf-Werte, KEINE echten Passwörter.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # Diese Variablen liest application.properties (${DB_HOST} usw.)
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: postgres
+      DB_USER: test
+      DB_PASSWORD: test
+
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Java 25 einrichten (mit Maven-Cache)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Maven-Wrapper ausführbar machen
+        run: chmod +x mvnw
+
+      - name: Bauen und testen
+        # -B = Batch-Modus (keine Farben/Fortschrittsbalken im Log)
+        run: ./mvnw -B verify
+
+      - name: Testberichte hochladen (auch bei Fehlern)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testberichte
+          path: maschinenverleih/target/surefire-reports/
+          if-no-files-found: ignore

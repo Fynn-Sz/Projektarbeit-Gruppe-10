@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Reservierung – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite" th:with="r=${reservierung}, storniert=${reservierung.status.name() == 'STORNIERT'}">
+
+    <ol class="schritte" aria-label="Ablauf der Reservierung" th:if="${neu}">
+        <li class="erledigt">Maschine suchen</li>
+        <li class="erledigt">Kunde &amp; Zeitraum bestätigen</li>
+        <li aria-current="step">Bestätigung erhalten</li>
+    </ol>
+
+    <nav class="brotkrumen" aria-label="Brotkrumen" th:unless="${neu}">
+        <ol>
+            <li><a th:href="@{/reservierungen}">Reservierungen</a></li>
+            <li aria-current="page" th:text="'#' + ${r.id}">#12</li>
+        </ol>
+    </nav>
+
+    <article class="bestaetigung">
+        <header class="bestaetigung-kopf" role="status">
+            <span class="haken" th:classappend="${storniert} ? 'haken--storniert'" aria-hidden="true">
+                <svg focusable="false" th:unless="${storniert}"><use href="/img/icons.svg#haken"/></svg>
+                <svg focusable="false" th:if="${storniert}"><use href="/img/icons.svg#storno"/></svg>
+            </span>
+            <h1 th:text="${storniert} ? 'Reservierung storniert' : (${neu} ? 'Reservierung bestätigt!' : 'Reservierung')">Reservierung bestätigt!</h1>
+            <p class="leise" th:if="${neu}">Die Maschine ist verbindlich für Sie reserviert. Bitte notieren Sie sich die Reservierungsnummer.</p>
+            <span class="reservierungsnummer">Reservierungsnummer <strong th:text="'#' + ${r.id}">#12</strong></span>
+        </header>
+
+        <div class="karte karte--akzent">
+            <div class="karte-kopf">
+                <h2 th:text="${r.maschine}">Minibagger CAT 301.7</h2>
+                <span class="plakette" th:classappend="${'status-' + #strings.toLowerCase(r.status.name())}"
+                      th:text="${r.status.bezeichnung}">Bestätigt</span>
+            </div>
+            <dl class="details">
+                <div><dt>Kunde</dt><dd th:text="${r.kunde}">Max Mustermann</dd></div>
+                <div><dt>Abholung</dt><dd th:text="'Standort ' + ${r.standort}">Standort Bielefeld</dd></div>
+                <div><dt>Zeitraum</dt>
+                    <dd><span th:text="${#temporals.format(r.von, 'EEE, dd.MM.yyyy')}">Di, 01.12.2026</span> –
+                        <span th:text="${#temporals.format(r.bis, 'EEE, dd.MM.yyyy')}">Sa, 05.12.2026</span></dd></div>
+                <div><dt>Miettage</dt><dd th:text="${r.mietTage}">5</dd></div>
+                <div><dt>Tagesmietpreis</dt><dd th:text="${#numbers.formatDecimal(r.tagesmietpreis, 1, 'POINT', 2, 'COMMA')} + ' €'">89,00 €</dd></div>
+                <div><dt>Reserviert am</dt><dd th:text="${#temporals.format(r.erstelltAm, 'dd.MM.yyyy, HH:mm')} + ' Uhr'">05.11.2026, 10:15 Uhr</dd></div>
+            </dl>
+            <div class="summe">
+                <span>Voraussichtlicher Preis</span>
+                <strong th:text="${#numbers.formatDecimal(r.voraussichtlicherPreis, 1, 'POINT', 2, 'COMMA')} + ' €'">445,00 €</strong>
+            </div>
+
+            <div class="formular-fuss">
+                <form th:unless="${storniert}" th:action="@{/reservierungen/{id}/stornieren(id=${r.id})}" method="post"
+                      data-rueckfrage-titel="Reservierung stornieren?"
+                      data-rueckfrage-knopf="Ja, stornieren"
+                      th:attr="data-rueckfrage='Die Reservierung #' + ${r.id} + ' für ' + ${r.maschine} + ' wird storniert. Die Maschine ist danach im Zeitraum wieder frei.'">
+                    <button class="btn btn-gefahr" type="submit">
+                        <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#storno"/></svg>
+                        Stornieren
+                    </button>
+                </form>
+                <span th:if="${storniert}"></span>
+                <div class="aktionen">
+                    <button class="btn btn-zweit" type="button" data-drucken>
+                        <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#drucken"/></svg>
+                        Drucken
+                    </button>
+                    <a class="btn btn-primaer" th:href="@{/suche}">
+                        <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#suche"/></svg>
+                        Weitere Maschine suchen
+                    </a>
+                </div>
+            </div>
+        </div>
+        <p class="sehr-leise abstand-oben" style="text-align:center" th:if="${neu}">
+            Eine Bestätigung per E-Mail folgt mit einer späteren Ausbaustufe (US 13).</p>
+    </article>
+</div>
+</body>
+</html>

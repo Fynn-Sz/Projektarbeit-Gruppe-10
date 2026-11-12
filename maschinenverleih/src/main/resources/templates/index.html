@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Maschinenverleih – Baumaschinen einfach reservieren</title>
+</head>
+<body>
+<div id="seite">
+
+    <section class="held" aria-labelledby="held-titel">
+        <div>
+            <span class="ueberzeile">Baumaschinen mieten</span>
+            <h1 id="held-titel">Die passende Maschine. Genau dann, wenn Sie sie brauchen.</h1>
+            <p class="held-text">Freie Maschinen nach Kategorie, Standort und Zeitraum finden und direkt verbindlich
+                reservieren – ohne Rückruf, ohne Wartezeit.</p>
+            <ul class="held-punkte">
+                <li><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#schild"/></svg>Nur wirklich freie Maschinen</li>
+                <li><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#haken"/></svg>Sofortige Bestätigung</li>
+                <li><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#ort"/></svg><span th:text="${#lists.size(standorte)} + ' Standorte'">2 Standorte</span></li>
+            </ul>
+        </div>
+
+        <form class="karte karte--glas karte--akzent" th:action="@{/suche}" method="get" data-zeitraum
+              aria-labelledby="schnellsuche-titel">
+            <div class="karte-kopf">
+                <h2 id="schnellsuche-titel">Verfügbarkeit prüfen</h2>
+            </div>
+            <div class="suchleiste suchleiste--kompakt">
+                <div class="feld">
+                    <label for="s-kategorie">Kategorie</label>
+                    <select id="s-kategorie" name="kategorieId">
+                        <option value="">Alle Kategorien</option>
+                        <option th:each="k : ${kategorien}" th:value="${k.id}" th:text="${k.name}">Bagger</option>
+                    </select>
+                </div>
+                <div class="feld">
+                    <label for="s-standort">Standort</label>
+                    <select id="s-standort" name="standortId">
+                        <option value="">Alle Standorte</option>
+                        <option th:each="s : ${standorte}" th:value="${s.id}" th:text="${s.name}">Bielefeld</option>
+                    </select>
+                </div>
+                <div class="feld">
+                    <label for="s-von">Von<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input id="s-von" type="date" name="von" required th:min="${heute}" th:value="${heute}">
+                </div>
+                <div class="feld">
+                    <label for="s-bis">Bis<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input id="s-bis" type="date" name="bis" required th:min="${heute}" th:value="${heute.plusDays(2)}">
+                </div>
+                <button class="btn btn-primaer btn-gross" type="submit">
+                    <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#suche"/></svg>
+                    Freie Maschinen anzeigen
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section aria-labelledby="kennzahlen-titel">
+        <h2 id="kennzahlen-titel" class="sr-only">Kennzahlen</h2>
+        <div class="kennzahlen">
+            <div class="kennzahl">
+                <span class="kennzahl-wert" th:text="${anzahlMaschinen}">12</span>
+                <span class="kennzahl-name">Maschinen im Bestand</span>
+            </div>
+            <div class="kennzahl">
+                <span class="kennzahl-wert" th:text="${heuteFrei}">9</span>
+                <span class="kennzahl-name">heute verfügbar</span>
+            </div>
+            <div class="kennzahl">
+                <span class="kennzahl-wert" th:text="${aktiveReservierungen}">4</span>
+                <span class="kennzahl-name">aktive Reservierungen</span>
+            </div>
+            <div class="kennzahl">
+                <span class="kennzahl-wert" th:text="${inWartung}">1</span>
+                <span class="kennzahl-name">in Wartung</span>
+            </div>
+        </div>
+    </section>
+
+    <section aria-labelledby="schnellzugriff-titel">
+        <h2 id="schnellzugriff-titel" class="sr-only">Schnellzugriff</h2>
+        <div class="kacheln">
+            <a class="kachel" th:href="@{/maschinen/neu}">
+                <span class="kachel-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#plus"/></svg></span>
+                <strong>Maschine anlegen</strong>
+                <span>Stammdaten mit Baujahr, Betriebsstunden und Wartungsintervall erfassen.</span>
+            </a>
+            <a class="kachel" th:href="@{/maschinen/import}">
+                <span class="kachel-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#tabelle"/></svg></span>
+                <strong>Excel importieren</strong>
+                <span>Bestehende Maschinenlisten übernehmen – mit Prüfung jeder Zeile.</span>
+            </a>
+            <a class="kachel" th:href="@{/maschinen}">
+                <span class="kachel-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#liste"/></svg></span>
+                <strong>Maschinenbestand</strong>
+                <span th:text="${anzahlMaschinen} + ' Maschinen bearbeiten und Historie ansehen.'">Maschinen bearbeiten.</span>
+            </a>
+            <a class="kachel" th:href="@{/kunden}">
+                <span class="kachel-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#kunden"/></svg></span>
+                <strong>Kunden</strong>
+                <span th:text="${anzahlKunden} + ' Kunden verwalten.'">Kunden verwalten.</span>
+            </a>
+        </div>
+    </section>
+
+    <section class="karte abstand-oben" aria-labelledby="naechste-titel">
+        <div class="karte-kopf">
+            <h2 id="naechste-titel">Nächste Reservierungen</h2>
+            <a class="btn btn-zweit btn-klein" th:href="@{/reservierungen}">Alle anzeigen</a>
+        </div>
+        <div th:if="${#lists.isEmpty(naechste)}" class="leer">
+            <span class="leer-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#kalender"/></svg></span>
+            <p>Zurzeit gibt es keine anstehenden Reservierungen.</p>
+        </div>
+        <dl class="details" th:unless="${#lists.isEmpty(naechste)}">
+            <div th:each="r : ${naechste}">
+                <dt>
+                    <a th:href="@{/reservierungen/{id}(id=${r.id})}" th:text="${r.maschine}">Minibagger</a>
+                    <span class="zelle-unter" th:text="${r.kunde} + ' · ' + ${r.standort}">Max Mustermann · Bielefeld</span>
+                </dt>
+                <dd th:text="${#temporals.format(r.von, 'dd.MM.')} + ' – ' + ${#temporals.format(r.bis, 'dd.MM.yyyy')}">10.12. – 12.12.2026</dd>
+            </div>
+        </dl>
+    </section>
+</div>
+</body>
+</html>

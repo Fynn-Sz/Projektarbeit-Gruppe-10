@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<!-- Fehlerseite: Spring Boot zeigt sie automatisch (z. B. 404), WebFehlerHandler fuer fachliche Fehler -->
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Fehler – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite" class="fehlerseite">
+    <div class="fehlercode" th:text="${status}">404</div>
+    <h1 th:switch="${status}">
+        <span th:case="404">Seite nicht gefunden</span>
+        <span th:case="400">Ungültige Anfrage</span>
+        <span th:case="409">Aktion nicht möglich</span>
+        <span th:case="*">Etwas ist schiefgelaufen</span>
+    </h1>
+    <p class="leise" th:if="${grund}" th:text="${grund}">Maschine mit ID 99 nicht gefunden</p>
+    <p class="leise" th:unless="${grund}">Die angeforderte Seite gibt es nicht oder sie konnte nicht geladen werden.</p>
+    <div class="aktionen">
+        <a class="btn btn-zweit" href="javascript:history.back()">
+            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#zurueck"/></svg>
+            Zurück
+        </a>
+        <a class="btn btn-primaer" th:href="@{/}">Zur Startseite</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Maschinen suchen – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite">
+
+    <ol class="schritte" aria-label="Ablauf der Reservierung">
+        <li aria-current="step">Maschine suchen</li>
+        <li>Kunde &amp; Zeitraum bestätigen</li>
+        <li>Bestätigung erhalten</li>
+    </ol>
+
+    <div class="seitenkopf">
+        <div>
+            <span class="ueberzeile">Schritt 1</span>
+            <h1>Freie Maschinen finden</h1>
+            <p>Wählen Sie den Zeitraum und optional Kategorie und Standort. Angezeigt werden nur Maschinen,
+                die in diesem Zeitraum tatsächlich frei und einsatzbereit sind.</p>
+        </div>
+    </div>
+
+    <form class="karte karte--akzent" th:action="@{/suche}" method="get" data-zeitraum role="search"
+          aria-label="Verfügbarkeitssuche">
+        <div class="suchleiste">
+            <div class="feld">
+                <label for="kategorie">Kategorie</label>
+                <select id="kategorie" name="kategorieId">
+                    <option value="">Alle Kategorien</option>
+                    <option th:each="k : ${kategorien}" th:value="${k.id}" th:text="${k.name}"
+                            th:selected="${k.id == kategorieId}">Bagger</option>
+                </select>
+            </div>
+            <div class="feld">
+                <label for="standort">Standort</label>
+                <select id="standort" name="standortId">
+                    <option value="">Alle Standorte</option>
+                    <option th:each="s : ${standorte}" th:value="${s.id}" th:text="${s.name}"
+                            th:selected="${s.id == standortId}">Bielefeld</option>
+                </select>
+            </div>
+            <div class="feld">
+                <label for="von">Von (erster Miettag)<span class="pflicht" aria-hidden="true">*</span></label>
+                <input id="von" type="date" name="von" required th:min="${heute}" th:value="${von}">
+            </div>
+            <div class="feld">
+                <label for="bis">Bis (letzter Miettag)<span class="pflicht" aria-hidden="true">*</span></label>
+                <input id="bis" type="date" name="bis" required th:min="${von != null ? von : heute}" th:value="${bis}">
+            </div>
+            <button class="btn btn-primaer" type="submit">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#suche"/></svg>
+                Suchen
+            </button>
+        </div>
+    </form>
+
+    <div th:if="${fehler}" class="meldung meldung--fehler abstand-oben" role="alert">
+        <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#warnung"/></svg>
+        <div><strong>Suche nicht möglich</strong><p th:text="${fehler}">Fehler</p></div>
+    </div>
+
+    <section th:if="${treffer != null}" aria-labelledby="treffer-titel" aria-live="polite">
+        <div class="treffer-kopf">
+            <h2 id="treffer-titel"
+                th:text="${#lists.size(treffer) == 1} ? '1 freie Maschine' : ${#lists.size(treffer)} + ' freie Maschinen'">3 freie Maschinen</h2>
+            <p class="leise" style="margin:0">
+                <span th:text="${#temporals.format(von, 'dd.MM.yyyy')}">01.12.2026</span> –
+                <span th:text="${#temporals.format(bis, 'dd.MM.yyyy')}">05.12.2026</span> ·
+                <span th:text="${tage == 1} ? '1 Miettag' : ${tage} + ' Miettage'">5 Miettage</span>
+            </p>
+        </div>
+
+        <div th:if="${#lists.isEmpty(treffer)}" class="leer">
+            <span class="leer-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#suche"/></svg></span>
+            <h3>Keine freie Maschine gefunden</h3>
+            <p>Im gewählten Zeitraum ist keine passende Maschine frei. Versuchen Sie einen anderen Zeitraum
+                oder entfernen Sie den Filter für Kategorie bzw. Standort.</p>
+        </div>
+
+        <ul class="treffer-liste" th:unless="${#lists.isEmpty(treffer)}">
+            <li th:each="t : ${treffer}" th:with="m=${t.maschine}">
+                <article class="maschinen-karte" th:aria-labelledby="${'m-' + m.id}">
+                    <div class="maschinen-karte-oben">
+                        <span class="chip"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#kategorie"/></svg><span th:text="${m.kategorie}">Bagger</span></span>
+                        <span class="chip"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#ort"/></svg><span th:text="${m.standort}">Bielefeld</span></span>
+                    </div>
+                    <h3 th:id="${'m-' + m.id}" th:text="${m.bezeichnung}">Minibagger CAT 301.7</h3>
+                    <span class="sehr-leise">
+                        <span class="mono" th:text="${m.inventarnummer}">M-0001</span>
+                        <th:block th:if="${m.hersteller}"> · <span th:text="${m.hersteller}">Caterpillar</span></th:block>
+                    </span>
+                    <dl class="eckdaten">
+                        <div><dt>Baujahr</dt><dd th:text="${m.baujahr}">2019</dd></div>
+                        <div><dt>Betriebsstd.</dt><dd th:text="${#numbers.formatInteger(m.betriebsstunden, 1, 'POINT')}">1.250</dd></div>
+                        <div><dt>Pro Tag</dt><dd th:text="${#numbers.formatDecimal(m.tagesmietpreis, 1, 'POINT', 2, 'COMMA')} + ' €'">89,00 €</dd></div>
+                    </dl>
+                    <div class="preis">
+                        <div>
+                            <small th:text="'Gesamt für ' + (${tage == 1} ? '1 Tag' : ${tage} + ' Tage')">Gesamt für 5 Tage</small>
+                            <span class="preis-gesamt" th:text="${#numbers.formatDecimal(t.gesamtpreis, 1, 'POINT', 2, 'COMMA')} + ' €'">445,00 €</span>
+                        </div>
+                        <small>zzgl. MwSt.</small>
+                    </div>
+                    <a class="btn btn-primaer btn-breit"
+                       th:href="@{/reservieren(maschineId=${m.id}, von=${von}, bis=${bis})}">
+                        Diese Maschine reservieren
+                        <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#pfeil"/></svg>
+                        <span class="sr-only" th:text="': ' + ${m.bezeichnung}"></span>
+                    </a>
+                </article>
+            </li>
+        </ul>
+    </section>
+
+    <div th:if="${treffer == null and fehler == null}" class="leer abstand-oben">
+        <span class="leer-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#kalender"/></svg></span>
+        <h3>Wann brauchen Sie die Maschine?</h3>
+        <p>Geben Sie oben den gewünschten Zeitraum ein, um die verfügbaren Maschinen zu sehen.</p>
+    </div>
+</div>
+</body>
+</html>

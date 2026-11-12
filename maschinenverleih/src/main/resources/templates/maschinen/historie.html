@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Historie – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite">
+    <nav class="brotkrumen" aria-label="Brotkrumen">
+        <ol>
+            <li><a th:href="@{/maschinen}">Maschinen</a></li>
+            <li><a th:href="@{/maschinen/{id}/bearbeiten(id=${maschine.id})}" th:text="${maschine.inventarnummer}">M-0001</a></li>
+            <li aria-current="page">Historie</li>
+        </ol>
+    </nav>
+
+    <div class="seitenkopf">
+        <div>
+            <span class="ueberzeile">Audit-Trail</span>
+            <h1>Änderungshistorie</h1>
+            <p><strong th:text="${maschine.bezeichnung}">Minibagger</strong> ·
+                <span class="mono" th:text="${maschine.inventarnummer}">M-0001</span> –
+                wer hat wann was geändert. Neueste Einträge zuerst.</p>
+        </div>
+        <div class="aktionen">
+            <a class="btn btn-zweit" th:href="@{/maschinen/{id}/bearbeiten(id=${maschine.id})}">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#bearbeiten"/></svg>
+                Bearbeiten
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(eintraege)}" class="leer">
+        <span class="leer-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#historie"/></svg></span>
+        <h3>Noch keine Einträge</h3>
+        <p>Diese Maschine stammt aus den Startdaten und wurde seitdem nicht verändert.</p>
+    </div>
+
+    <ol class="zeitleiste" th:unless="${#lists.isEmpty(eintraege)}">
+        <li th:each="e : ${eintraege}">
+            <article class="karte">
+                <div class="eintrag-kopf">
+                    <span class="plakette" th:classappend="${'aktion-' + #strings.toLowerCase(e.aktion.name())}"
+                          th:text="${e.aktion.bezeichnung}">Geändert</span>
+                    <time th:datetime="${e.zeitpunkt}" th:text="${#temporals.format(e.zeitpunkt, 'dd.MM.yyyy, HH:mm:ss')} + ' Uhr'">05.11.2026, 10:15 Uhr</time>
+                    <span class="sehr-leise" th:text="'von ' + ${e.benutzer}">von system</span>
+                </div>
+                <p class="sehr-leise" th:if="${#lists.isEmpty(e.felder)}" style="margin:0">Keine Feldänderungen.</p>
+                <table class="aenderungen" th:unless="${#lists.isEmpty(e.felder)}">
+                    <thead>
+                    <tr>
+                        <th scope="col">Feld</th>
+                        <th scope="col" th:if="${e.aktion.name() == 'GEAENDERT' or e.aktion.name() == 'GELOESCHT'}">Vorher</th>
+                        <th scope="col" th:if="${e.aktion.name() != 'GELOESCHT'}">Nachher</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="f : ${e.felder}">
+                        <th scope="row" th:text="${f.name}">Betriebsstunden</th>
+                        <td th:if="${e.aktion.name() == 'GEAENDERT' or e.aktion.name() == 'GELOESCHT'}">
+                            <span th:class="${e.aktion.name() == 'GEAENDERT'} ? 'wert-alt'" th:text="${f.vorher ?: '–'}">1250</span></td>
+                        <td th:if="${e.aktion.name() != 'GELOESCHT'}">
+                            <span th:class="${e.aktion.name() == 'GEAENDERT'} ? 'wert-neu'" th:text="${f.nachher ?: '–'}">1300</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </article>
+        </li>
+    </ol>
+</div>
+</body>
+</html>
