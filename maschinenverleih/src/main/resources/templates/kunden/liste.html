@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Kunden – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite">
+    <div class="seitenkopf">
+        <div>
+            <span class="ueberzeile">Stammdaten</span>
+            <h1>Kunden</h1>
+            <p>Kunden, für die reserviert werden kann. Kundennummer und E-Mail-Adresse sind eindeutig.</p>
+        </div>
+        <div class="aktionen">
+            <a class="btn btn-primaer" th:href="@{/kunden/neu}">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#plus"/></svg>
+                Kunde anlegen
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(kunden)}" class="leer">
+        <span class="leer-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#kunden"/></svg></span>
+        <h3>Noch keine Kunden</h3>
+        <p>Legen Sie den ersten Kunden an, um Reservierungen erfassen zu können.</p>
+    </div>
+
+    <div class="tabelle-rahmen" th:unless="${#lists.isEmpty(kunden)}">
+        <table class="tabelle">
+            <caption th:text="${#lists.size(kunden)} + ' Kunde(n)'">2 Kunden</caption>
+            <thead>
+            <tr>
+                <th scope="col">Kunden-Nr.</th>
+                <th scope="col">Name</th>
+                <th scope="col">Kontakt</th>
+                <th scope="col">Anschrift</th>
+                <th scope="col" class="rechts"><span class="sr-only">Aktionen</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="k : ${kunden}">
+                <td class="mono" th:text="${k.kundennummer}">K-1001</td>
+                <td>
+                    <span class="zelle-titel" th:text="${k.vorname} + ' ' + ${k.nachname}">Max Mustermann</span>
+                    <span class="zelle-unter" th:if="${k.firma}" th:text="${k.firma}">Mustermann Bau GmbH</span>
+                </td>
+                <td>
+                    <a th:href="'mailto:' + ${k.email}" th:text="${k.email}">max@example.de</a>
+                    <span class="zelle-unter" th:if="${k.telefon}" th:text="${k.telefon}">0521 123456</span>
+                </td>
+                <td>
+                    <span class="zelle-titel" th:text="${k.strasse}" style="font-weight:400">Hauptstraße 1</span>
+                    <span class="zelle-unter" th:text="${k.plz} + ' ' + ${k.ort}">33602 Bielefeld</span>
+                </td>
+                <td class="knapp">
+                    <a class="btn btn-zweit btn-klein" th:href="@{/reservierungen(kundeId=${k.id})}">Reservierungen</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

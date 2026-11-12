@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Excel-Import – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite">
+    <div class="seitenkopf">
+        <div>
+            <span class="ueberzeile">Datenübernahme</span>
+            <h1>Maschinen aus Excel importieren</h1>
+            <p>Laden Sie Ihre bestehende Maschinenliste hoch. Jede Zeile wird einzeln geprüft: Fehlerhafte
+                Zeilen werden mit Zeilennummer gemeldet, bereits vorhandene Inventarnummern übersprungen.
+                Der Import kann gefahrlos wiederholt werden.</p>
+        </div>
+        <div class="aktionen">
+            <a class="btn btn-zweit" th:href="@{/vorlagen/Maschinen_Import_Vorlage.xlsx}" download>
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#download"/></svg>
+                Vorlage herunterladen
+            </a>
+        </div>
+    </div>
+
+    <div th:if="${fehler}" class="meldung meldung--fehler" role="alert">
+        <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#warnung"/></svg>
+        <div><strong>Import nicht möglich</strong><p th:text="${fehler}">Fehler</p></div>
+    </div>
+
+    <section th:if="${ergebnis}" aria-labelledby="ergebnis-titel" role="status">
+        <h2 id="ergebnis-titel">Ergebnis</h2>
+        <p class="leise" th:text="'Datei: ' + ${dateiname}">Datei: maschinen.xlsx</p>
+        <div class="kennzahlen">
+            <div class="kennzahl">
+                <span class="kennzahl-wert" th:text="${ergebnis.importiert}">3</span>
+                <span class="kennzahl-name">importiert</span>
+            </div>
+            <div class="kennzahl">
+                <span class="kennzahl-wert" th:text="${ergebnis.uebersprungen}">2</span>
+                <span class="kennzahl-name">übersprungen (bereits vorhanden)</span>
+            </div>
+            <div class="kennzahl">
+                <span class="kennzahl-wert" th:text="${#lists.size(ergebnis.fehler)}">4</span>
+                <span class="kennzahl-name">fehlerhafte Zeilen</span>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(ergebnis.fehler)}" class="meldung meldung--erfolg">
+            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#haken"/></svg>
+            <p>Alle Zeilen wurden fehlerfrei verarbeitet.</p>
+        </div>
+
+        <div class="tabelle-rahmen" th:unless="${#lists.isEmpty(ergebnis.fehler)}" style="margin-bottom:2rem">
+            <table class="tabelle">
+                <caption>Diese Zeilen wurden nicht übernommen. Korrigieren Sie sie in Excel und importieren Sie die Datei erneut.</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="knapp">Excel-Zeile</th>
+                    <th scope="col">Problem</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="f : ${ergebnis.fehler}">
+                    <td class="mono" th:text="${f.zeile}">5</td>
+                    <td th:text="${f.meldung}">Kategorie 'Kran' existiert nicht</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="aktionen" style="margin-bottom:2.5rem">
+            <a class="btn btn-primaer" th:href="@{/maschinen}">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#liste"/></svg>
+                Zum Maschinenbestand
+            </a>
+        </div>
+    </section>
+
+    <div class="raster raster-seite">
+        <form class="karte karte--akzent" th:action="@{/maschinen/import}" method="post" enctype="multipart/form-data"
+              aria-labelledby="hochladen-titel">
+            <h2 id="hochladen-titel" th:text="${ergebnis} ? 'Weitere Datei importieren' : 'Datei hochladen'">Datei hochladen</h2>
+            <label class="ablage" for="datei">
+                <span class="ablage-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#tabelle"/></svg></span>
+                <span><strong>Excel-Datei auswählen</strong> oder hierher ziehen</span>
+                <span class="sehr-leise">.xlsx, höchstens 5 MB</span>
+                <span class="ablage-datei" aria-live="polite"></span>
+                <input type="file" id="datei" name="datei" required
+                       accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+            </label>
+            <div class="formular-fuss">
+                <span class="sehr-leise">Gespeichert wird jede gültige Zeile – fehlerhafte nicht.</span>
+                <button class="btn btn-primaer" type="submit">
+                    <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#upload"/></svg>
+                    Importieren
+                </button>
+            </div>
+        </form>
+
+        <section class="karte" aria-labelledby="aufbau-titel">
+            <h2 id="aufbau-titel">Aufbau der Datei</h2>
+            <p class="leise">Zeile 1 enthält die Spaltenüberschriften, die Reihenfolge ist egal.</p>
+            <div class="tabelle-rahmen">
+                <table class="tabelle">
+                    <thead><tr><th scope="col">Spalte</th><th scope="col">Pflicht</th><th scope="col">Beispiel</th></tr></thead>
+                    <tbody>
+                    <tr><td>Inventarnummer</td><td>ja</td><td class="mono">M-0101</td></tr>
+                    <tr><td>Bezeichnung</td><td>ja</td><td>Radlader Volvo L30</td></tr>
+                    <tr><td>Kategorie</td><td>ja</td><td>Radlader</td></tr>
+                    <tr><td>Standort</td><td>ja</td><td>Bielefeld</td></tr>
+                    <tr><td>Baujahr</td><td>ja</td><td>2020</td></tr>
+                    <tr><td>Betriebsstunden</td><td>ja</td><td>800</td></tr>
+                    <tr><td>Wartungsintervall</td><td>ja</td><td>500</td></tr>
+                    <tr><td>Tagesmietpreis</td><td>ja</td><td>95,00</td></tr>
+                    <tr><td>Hersteller</td><td>nein</td><td>Volvo</td></tr>
+                    <tr><td>Garantie bis</td><td>nein</td><td>31.12.2027</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+</body>
+</html>

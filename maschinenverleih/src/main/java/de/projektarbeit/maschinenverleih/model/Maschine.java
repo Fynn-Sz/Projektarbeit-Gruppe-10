@@ -1,13 +1,18 @@
 package de.projektarbeit.maschinenverleih.model;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "maschine")
@@ -17,26 +22,27 @@ public class Maschine {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Bezeichnung ist ein Pflichtfeld")
+    private String inventarnummer;
     private String bezeichnung;
 
-    @NotBlank(message = "Typ ist ein Pflichtfeld")
-    private String typ;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "kategorie_id")
+    private Kategorie kategorie;
 
-    @NotNull(message = "Baujahr ist ein Pflichtfeld")
-    @Min(value = 1950, message = "Baujahr muss ab 1950 sein")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "standort_id")
+    private Standort standort;
+
+    private String hersteller;
     private Integer baujahr;
+    private Integer betriebsstunden;
+    private Integer wartungsintervallStd;
+    private BigDecimal tagesmietpreis;
+    private LocalDate garantieBis;
 
-    @Min(value = 0, message = "Betriebsstunden duerfen nicht negativ sein")
-    private int betriebsstunden;
+    @Enumerated(EnumType.STRING)
+    private MaschinenStatus status = MaschinenStatus.VERFUEGBAR;
 
-    @NotNull(message = "Wartungsintervall ist ein Pflichtfeld")
-    @Min(value = 1, message = "Wartungsintervall muss mindestens 1 Stunde sein")
-    private Integer wartungsintervall;
-
-    private String standort;
-
-    // JPA braucht einen leeren Konstruktor
     public Maschine() {
     }
 
@@ -44,8 +50,12 @@ public class Maschine {
         return id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public String getInventarnummer() {
+        return inventarnummer;
+    }
+
+    public void setInventarnummer(String inventarnummer) {
+        this.inventarnummer = inventarnummer;
     }
 
     public String getBezeichnung() {
@@ -56,12 +66,28 @@ public class Maschine {
         this.bezeichnung = bezeichnung;
     }
 
-    public String getTyp() {
-        return typ;
+    public Kategorie getKategorie() {
+        return kategorie;
     }
 
-    public void setTyp(String typ) {
-        this.typ = typ;
+    public void setKategorie(Kategorie kategorie) {
+        this.kategorie = kategorie;
+    }
+
+    public Standort getStandort() {
+        return standort;
+    }
+
+    public void setStandort(Standort standort) {
+        this.standort = standort;
+    }
+
+    public String getHersteller() {
+        return hersteller;
+    }
+
+    public void setHersteller(String hersteller) {
+        this.hersteller = hersteller;
     }
 
     public Integer getBaujahr() {
@@ -72,27 +98,43 @@ public class Maschine {
         this.baujahr = baujahr;
     }
 
-    public int getBetriebsstunden() {
+    public Integer getBetriebsstunden() {
         return betriebsstunden;
     }
 
-    public void setBetriebsstunden(int betriebsstunden) {
+    public void setBetriebsstunden(Integer betriebsstunden) {
         this.betriebsstunden = betriebsstunden;
     }
 
-    public Integer getWartungsintervall() {
-        return wartungsintervall;
+    public Integer getWartungsintervallStd() {
+        return wartungsintervallStd;
     }
 
-    public void setWartungsintervall(Integer wartungsintervall) {
-        this.wartungsintervall = wartungsintervall;
+    public void setWartungsintervallStd(Integer wartungsintervallStd) {
+        this.wartungsintervallStd = wartungsintervallStd;
     }
 
-    public String getStandort() {
-        return standort;
+    public BigDecimal getTagesmietpreis() {
+        return tagesmietpreis;
     }
 
-    public void setStandort(String standort) {
-        this.standort = standort;
+    public void setTagesmietpreis(BigDecimal tagesmietpreis) {
+        this.tagesmietpreis = tagesmietpreis;
+    }
+
+    public LocalDate getGarantieBis() {
+        return garantieBis;
+    }
+
+    public void setGarantieBis(LocalDate garantieBis) {
+        this.garantieBis = garantieBis;
+    }
+
+    public MaschinenStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(MaschinenStatus status) {
+        this.status = status;
     }
 }

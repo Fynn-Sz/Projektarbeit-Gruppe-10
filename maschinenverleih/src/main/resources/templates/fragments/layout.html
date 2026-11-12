@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<!--
+  Grundgeruest aller Seiten. Eine Seite bindet es so ein:
+  <html th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+  Welcher Menuepunkt aktiv ist, steht im Model-Attribut "seite".
+-->
+<html lang="de" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(titel, inhalt)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#0c0806">
+    <title th:replace="${titel}">Maschinenverleih</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/js/app.js}" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+
+<header class="kopf">
+    <div class="container kopf-innen">
+        <a class="marke" th:href="@{/}" aria-label="Maschinenverleih – Startseite">
+            <span class="marke-logo" aria-hidden="true">
+                <svg focusable="false"><use href="/img/icons.svg#maschine"/></svg>
+            </span>
+            <span>Maschinen<em>verleih</em></span>
+        </a>
+
+        <button class="nav-schalter" type="button" aria-controls="hauptnavigation" aria-expanded="false">
+            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#menue"/></svg>
+            <span class="sr-only">Menü öffnen</span>
+        </button>
+
+        <nav class="navigation" id="hauptnavigation" aria-label="Hauptnavigation">
+            <ul>
+                <li><a th:href="@{/}" th:aria-current="${seite == 'start'} ? 'page'">
+                    <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#start"/></svg>Start</a></li>
+                <li><a th:href="@{/suche}" th:aria-current="${seite == 'suche'} ? 'page'">
+                    <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#suche"/></svg>Suchen &amp; Reservieren</a></li>
+                <li><a th:href="@{/reservierungen}" th:aria-current="${seite == 'reservierungen'} ? 'page'">
+                    <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#kalender"/></svg>Reservierungen</a></li>
+                <li><a th:href="@{/maschinen}" th:aria-current="${seite == 'maschinen'} ? 'page'">
+                    <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#maschine"/></svg>Maschinen</a></li>
+                <li><a th:href="@{/maschinen/import}" th:aria-current="${seite == 'import'} ? 'page'">
+                    <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#upload"/></svg>Import</a></li>
+                <li><a th:href="@{/kunden}" th:aria-current="${seite == 'kunden'} ? 'page'">
+                    <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#kunden"/></svg>Kunden</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<main id="inhalt" tabindex="-1">
+    <div class="container">
+        <!-- Rueckmeldungen nach einer Aktion (Flash-Attribute nach Redirect) -->
+        <div th:if="${meldung}" class="meldung meldung--erfolg" role="status">
+            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#haken"/></svg>
+            <p th:text="${meldung}">Gespeichert.</p>
+        </div>
+        <div th:if="${fehlermeldung}" class="meldung meldung--fehler" role="alert">
+            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#warnung"/></svg>
+            <p th:text="${fehlermeldung}">Fehler.</p>
+        </div>
+
+        <div th:replace="${inhalt}">Seiteninhalt</div>
+    </div>
+</main>
+
+<footer class="fuss">
+    <div class="container fuss-innen">
+        <p style="margin:0">© <span th:text="${#temporals.year(#temporals.createNow())}">2026</span>
+            Maschinenverleih · Projektarbeit</p>
+        <nav aria-label="Weitere Links">
+            <a th:href="@{/swagger-ui.html}">API-Dokumentation (Swagger)</a>
+            <a th:href="@{/vorlagen/Maschinen_Import_Vorlage.xlsx}">Excel-Vorlage</a>
+        </nav>
+    </div>
+</footer>
+
+<!-- Sicherheitsabfrage fuer Loeschen/Stornieren (wird von app.js geoeffnet) -->
+<dialog class="dialog" id="rueckfrage" aria-labelledby="rueckfrage-titel" aria-describedby="rueckfrage-text">
+    <form method="dialog" class="dialog-inhalt">
+        <h2 id="rueckfrage-titel">Sind Sie sicher?</h2>
+        <p id="rueckfrage-text" class="leise">Diese Aktion kann nicht rückgängig gemacht werden.</p>
+        <div class="aktionen">
+            <button class="btn btn-zweit" value="abbrechen" type="submit">Abbrechen</button>
+            <button class="btn btn-primaer" value="ok" type="submit" id="rueckfrage-ok">Ja, fortfahren</button>
+        </div>
+    </form>
+</dialog>
+</body>
+</html>

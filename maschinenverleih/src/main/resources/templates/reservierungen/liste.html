@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Reservierungen – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite">
+    <div class="seitenkopf">
+        <div>
+            <span class="ueberzeile">Übersicht</span>
+            <h1>Reservierungen</h1>
+            <p>Alle Reservierungen, neueste Mietbeginne zuerst. Stornierte Reservierungen bleiben zur
+                Nachvollziehbarkeit sichtbar.</p>
+        </div>
+        <div class="aktionen">
+            <a class="btn btn-primaer" th:href="@{/suche}">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#plus"/></svg>
+                Neue Reservierung
+            </a>
+        </div>
+    </div>
+
+    <form class="filterleiste" th:action="@{/reservierungen}" method="get" aria-label="Reservierungen filtern">
+        <div class="feld">
+            <label for="filter-kunde">Kunde</label>
+            <select id="filter-kunde" name="kundeId">
+                <option value="">Alle Kunden</option>
+                <option th:each="k : ${kunden}" th:value="${k.id}" th:selected="${k.id == kundeId}"
+                        th:text="${k.nachname} + ', ' + ${k.vorname}">Mustermann, Max</option>
+            </select>
+        </div>
+        <button class="btn btn-zweit" type="submit">Filtern</button>
+        <a class="btn btn-zweit" th:if="${kundeId}" th:href="@{/reservierungen}">Filter zurücksetzen</a>
+    </form>
+
+    <div th:if="${#lists.isEmpty(reservierungen)}" class="leer">
+        <span class="leer-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#kalender"/></svg></span>
+        <h3>Noch keine Reservierungen</h3>
+        <p>Suchen Sie eine freie Maschine und reservieren Sie sie in wenigen Schritten.</p>
+        <a class="btn btn-primaer" th:href="@{/suche}">Maschine suchen</a>
+    </div>
+
+    <div class="tabelle-rahmen" th:unless="${#lists.isEmpty(reservierungen)}">
+        <table class="tabelle">
+            <caption th:text="${#lists.size(reservierungen)} + ' Reservierung(en)'">3 Reservierungen</caption>
+            <thead>
+            <tr>
+                <th scope="col">Nr.</th>
+                <th scope="col">Maschine</th>
+                <th scope="col">Kunde</th>
+                <th scope="col">Zeitraum</th>
+                <th scope="col" class="rechts">Preis</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="rechts"><span class="sr-only">Aktionen</span></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${reservierungen}">
+                <td><a class="mono" th:href="@{/reservierungen/{id}(id=${r.id})}" th:text="'#' + ${r.id}">#1</a></td>
+                <td>
+                    <span class="zelle-titel" th:text="${r.maschine}">Minibagger</span>
+                    <span class="zelle-unter" th:text="${r.standort}">Bielefeld</span>
+                </td>
+                <td th:text="${r.kunde}">Max Mustermann</td>
+                <td class="zahl">
+                    <span class="zelle-titel" th:text="${#temporals.format(r.von, 'dd.MM.yyyy')} + ' – ' + ${#temporals.format(r.bis, 'dd.MM.yyyy')}">01.12.2026 – 05.12.2026</span>
+                    <span class="zelle-unter" th:text="${r.mietTage == 1} ? '1 Tag' : ${r.mietTage} + ' Tage'">5 Tage</span>
+                </td>
+                <td class="rechts zahl" th:text="${#numbers.formatDecimal(r.voraussichtlicherPreis, 1, 'POINT', 2, 'COMMA')} + ' €'">445,00 €</td>
+                <td><span class="plakette" th:classappend="${'status-' + #strings.toLowerCase(r.status.name())}"
+                          th:text="${r.status.bezeichnung}">Bestätigt</span></td>
+                <td class="knapp">
+                    <div class="zeilen-aktionen">
+                        <a class="icon-btn" th:href="@{/reservierungen/{id}(id=${r.id})}" th:title="'Reservierung #' + ${r.id} + ' öffnen'">
+                            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#pfeil"/></svg>
+                            <span class="sr-only" th:text="'Reservierung #' + ${r.id} + ' öffnen'">Öffnen</span>
+                        </a>
+                        <form th:if="${r.status.name() != 'STORNIERT'}" method="post"
+                              th:action="@{/reservierungen/{id}/stornieren(id=${r.id})}"
+                              data-rueckfrage-titel="Reservierung stornieren?" data-rueckfrage-knopf="Ja, stornieren"
+                              th:attr="data-rueckfrage='Reservierung #' + ${r.id} + ' (' + ${r.maschine} + ') wird storniert.'">
+                            <button class="icon-btn icon-btn--gefahr" type="submit" th:title="'Reservierung #' + ${r.id} + ' stornieren'">
+                                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#storno"/></svg>
+                                <span class="sr-only" th:text="'Reservierung #' + ${r.id} + ' stornieren'">Stornieren</span>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

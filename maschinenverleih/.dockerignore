@@ -1,0 +1,9 @@
+# Was NICHT ins Docker-Image kopiert werden soll
+target/
+.idea/
+.vscode/
+.git/
+*.iml
+*.env
+.env
+.DS_Store

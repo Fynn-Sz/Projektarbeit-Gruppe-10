@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Kunde anlegen – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite" th:with="ausReservierung=${maschineId != null}">
+    <nav class="brotkrumen" aria-label="Brotkrumen">
+        <ol>
+            <li th:unless="${ausReservierung}"><a th:href="@{/kunden}">Kunden</a></li>
+            <li th:if="${ausReservierung}"><a th:href="@{/reservieren(maschineId=${maschineId}, von=${von}, bis=${bis})}">Reservierung</a></li>
+            <li aria-current="page">Neuer Kunde</li>
+        </ol>
+    </nav>
+
+    <div class="seitenkopf">
+        <div>
+            <span class="ueberzeile">Anlegen</span>
+            <h1>Neuen Kunden anlegen</h1>
+            <p th:if="${ausReservierung}">Nach dem Speichern geht es direkt zurück zu Ihrer Reservierung.</p>
+            <p th:unless="${ausReservierung}">Pflichtfelder sind mit <span class="pflicht">*</span> markiert.</p>
+        </div>
+    </div>
+
+    <form class="karte" th:object="${formular}" th:action="@{/kunden}" method="post" novalidate>
+        <input type="hidden" name="maschineId" th:if="${ausReservierung}" th:value="${maschineId}">
+        <input type="hidden" name="von" th:if="${ausReservierung}" th:value="${von}">
+        <input type="hidden" name="bis" th:if="${ausReservierung}" th:value="${bis}">
+
+        <div th:if="${#fields.hasErrors('*')}" class="meldung meldung--fehler" role="alert">
+            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#warnung"/></svg>
+            <div>
+                <strong>Bitte prüfen Sie Ihre Eingaben</strong>
+                <ul>
+                    <li th:each="e : ${#fields.globalErrors()}" th:text="${e}">Allgemeiner Fehler</li>
+                    <li th:each="e : ${#fields.detailedErrors()}" th:if="${!e.global}">
+                        <a th:href="'#' + ${e.fieldName}" th:text="${e.message}">Feldfehler</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <fieldset class="feldgruppe">
+            <legend>Kunde</legend>
+            <div class="formular-raster">
+                <div class="feld" th:classappend="${#fields.hasErrors('kundennummer')} ? 'feld--fehler'">
+                    <label for="kundennummer">Kundennummer<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="text" th:field="*{kundennummer}" required maxlength="20" placeholder="z. B. K-1003"
+                           aria-describedby="kundennummer-fehler" th:aria-invalid="${#fields.hasErrors('kundennummer')} ? 'true'">
+                    <p class="feld-fehler" id="kundennummer-fehler" th:if="${#fields.hasErrors('kundennummer')}" th:errors="*{kundennummer}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('firma')} ? 'feld--fehler'" style="grid-column: span 2">
+                    <label for="firma">Firma</label>
+                    <input type="text" th:field="*{firma}" maxlength="100" autocomplete="organization"
+                           aria-describedby="firma-fehler" th:aria-invalid="${#fields.hasErrors('firma')} ? 'true'">
+                    <p class="feld-fehler" id="firma-fehler" th:if="${#fields.hasErrors('firma')}" th:errors="*{firma}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('vorname')} ? 'feld--fehler'">
+                    <label for="vorname">Vorname<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="text" th:field="*{vorname}" required maxlength="50" autocomplete="given-name"
+                           aria-describedby="vorname-fehler" th:aria-invalid="${#fields.hasErrors('vorname')} ? 'true'">
+                    <p class="feld-fehler" id="vorname-fehler" th:if="${#fields.hasErrors('vorname')}" th:errors="*{vorname}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('nachname')} ? 'feld--fehler'">
+                    <label for="nachname">Nachname<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="text" th:field="*{nachname}" required maxlength="50" autocomplete="family-name"
+                           aria-describedby="nachname-fehler" th:aria-invalid="${#fields.hasErrors('nachname')} ? 'true'">
+                    <p class="feld-fehler" id="nachname-fehler" th:if="${#fields.hasErrors('nachname')}" th:errors="*{nachname}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('ustId')} ? 'feld--fehler'">
+                    <label for="ustId">USt-IdNr.</label>
+                    <input type="text" th:field="*{ustId}" maxlength="20" placeholder="z. B. DE123456789"
+                           aria-describedby="ustId-fehler" th:aria-invalid="${#fields.hasErrors('ustId')} ? 'true'">
+                    <p class="feld-fehler" id="ustId-fehler" th:if="${#fields.hasErrors('ustId')}" th:errors="*{ustId}"></p>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="feldgruppe">
+            <legend>Kontakt</legend>
+            <div class="formular-raster">
+                <div class="feld" th:classappend="${#fields.hasErrors('email')} ? 'feld--fehler'">
+                    <label for="email">E-Mail<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="email" th:field="*{email}" required maxlength="100" autocomplete="email"
+                           aria-describedby="email-fehler" th:aria-invalid="${#fields.hasErrors('email')} ? 'true'">
+                    <p class="feld-fehler" id="email-fehler" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('telefon')} ? 'feld--fehler'">
+                    <label for="telefon">Telefon</label>
+                    <input type="tel" th:field="*{telefon}" maxlength="30" autocomplete="tel"
+                           aria-describedby="telefon-fehler" th:aria-invalid="${#fields.hasErrors('telefon')} ? 'true'">
+                    <p class="feld-fehler" id="telefon-fehler" th:if="${#fields.hasErrors('telefon')}" th:errors="*{telefon}"></p>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset class="feldgruppe" style="margin-bottom:0">
+            <legend>Anschrift</legend>
+            <div class="formular-raster">
+                <div class="feld breit" th:classappend="${#fields.hasErrors('strasse')} ? 'feld--fehler'">
+                    <label for="strasse">Straße und Hausnummer<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="text" th:field="*{strasse}" required maxlength="100" autocomplete="street-address"
+                           aria-describedby="strasse-fehler" th:aria-invalid="${#fields.hasErrors('strasse')} ? 'true'">
+                    <p class="feld-fehler" id="strasse-fehler" th:if="${#fields.hasErrors('strasse')}" th:errors="*{strasse}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('plz')} ? 'feld--fehler'">
+                    <label for="plz">PLZ<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="text" th:field="*{plz}" required maxlength="5" inputmode="numeric" autocomplete="postal-code"
+                           aria-describedby="plz-fehler" th:aria-invalid="${#fields.hasErrors('plz')} ? 'true'">
+                    <p class="feld-fehler" id="plz-fehler" th:if="${#fields.hasErrors('plz')}" th:errors="*{plz}"></p>
+                </div>
+                <div class="feld" th:classappend="${#fields.hasErrors('ort')} ? 'feld--fehler'">
+                    <label for="ort">Ort<span class="pflicht" aria-hidden="true">*</span></label>
+                    <input type="text" th:field="*{ort}" required maxlength="100" autocomplete="address-level2"
+                           aria-describedby="ort-fehler" th:aria-invalid="${#fields.hasErrors('ort')} ? 'true'">
+                    <p class="feld-fehler" id="ort-fehler" th:if="${#fields.hasErrors('ort')}" th:errors="*{ort}"></p>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="formular-fuss">
+            <a class="btn btn-zweit" th:href="${ausReservierung} ? @{/reservieren(maschineId=${maschineId}, von=${von}, bis=${bis})} : @{/kunden}">Abbrechen</a>
+            <button class="btn btn-primaer btn-gross" type="submit">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#haken"/></svg>
+                <span th:text="${ausReservierung} ? 'Speichern und weiter zur Reservierung' : 'Kunde anlegen'">Kunde anlegen</span>
+            </button>
+        </div>
+    </form>
+</div>
+</body>
+</html>

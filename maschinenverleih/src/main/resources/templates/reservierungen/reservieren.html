@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Reservierung prüfen – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite">
+
+    <ol class="schritte" aria-label="Ablauf der Reservierung">
+        <li class="erledigt"><a th:href="@{/suche(von=${von}, bis=${bis})}" style="color:inherit">Maschine suchen</a></li>
+        <li aria-current="step">Kunde &amp; Zeitraum bestätigen</li>
+        <li>Bestätigung erhalten</li>
+    </ol>
+
+    <div class="seitenkopf">
+        <div>
+            <span class="ueberzeile">Schritt 2</span>
+            <h1>Reservierung prüfen</h1>
+            <p>Bitte prüfen Sie Maschine, Zeitraum und Preis und wählen Sie den Kunden aus.
+                Mit „Verbindlich reservieren“ wird die Maschine fest für Sie gebucht.</p>
+        </div>
+    </div>
+
+    <div th:if="${fehler}" class="meldung meldung--fehler" role="alert">
+        <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#warnung"/></svg>
+        <div>
+            <strong>Die Reservierung konnte nicht gespeichert werden</strong>
+            <ul><li th:each="f : ${fehler}" th:text="${f}">Fehler</li></ul>
+        </div>
+    </div>
+
+    <div class="raster raster-seite">
+        <section class="karte" aria-labelledby="maschine-titel">
+            <div class="maschinen-karte-oben">
+                <span class="chip"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#kategorie"/></svg><span th:text="${maschine.kategorie}">Bagger</span></span>
+                <span class="chip"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#ort"/></svg><span th:text="${maschine.standort}">Bielefeld</span></span>
+            </div>
+            <h2 id="maschine-titel" th:text="${maschine.bezeichnung}">Minibagger CAT 301.7</h2>
+            <p class="sehr-leise"><span class="mono" th:text="${maschine.inventarnummer}">M-0001</span></p>
+            <dl class="details">
+                <div th:if="${maschine.hersteller}"><dt>Hersteller</dt><dd th:text="${maschine.hersteller}">Caterpillar</dd></div>
+                <div><dt>Baujahr</dt><dd th:text="${maschine.baujahr}">2019</dd></div>
+                <div><dt>Betriebsstunden</dt><dd th:text="${#numbers.formatInteger(maschine.betriebsstunden, 1, 'POINT')} + ' h'">1.250 h</dd></div>
+                <div><dt>Abholung</dt><dd th:text="'Standort ' + ${maschine.standort}">Standort Bielefeld</dd></div>
+            </dl>
+        </section>
+
+        <form class="karte karte--akzent" th:action="@{/reservieren}" method="post" aria-labelledby="buchung-titel">
+            <h2 id="buchung-titel">Ihre Buchung</h2>
+            <input type="hidden" name="maschineId" th:value="${maschine.id}">
+            <input type="hidden" name="von" th:value="${von}">
+            <input type="hidden" name="bis" th:value="${bis}">
+
+            <dl class="details">
+                <div><dt>Zeitraum</dt>
+                    <dd><span th:text="${#temporals.format(von, 'EEE, dd.MM.yyyy')}">Di, 01.12.2026</span> –
+                        <span th:text="${#temporals.format(bis, 'EEE, dd.MM.yyyy')}">Sa, 05.12.2026</span></dd></div>
+                <div><dt>Miettage</dt><dd th:text="${tage}">5</dd></div>
+                <div><dt>Tagesmietpreis</dt><dd th:text="${#numbers.formatDecimal(maschine.tagesmietpreis, 1, 'POINT', 2, 'COMMA')} + ' €'">89,00 €</dd></div>
+            </dl>
+            <div class="summe">
+                <span>Voraussichtlicher Preis</span>
+                <strong th:text="${#numbers.formatDecimal(gesamtpreis, 1, 'POINT', 2, 'COMMA')} + ' €'">445,00 €</strong>
+            </div>
+            <p class="sehr-leise" style="margin-top:.5rem">Preis zzgl. MwSt. Abgerechnet wird nach tatsächlicher Mietdauer.</p>
+
+            <div class="feld abstand-oben" th:classappend="${fehler != null and kundeId == null} ? 'feld--fehler'">
+                <label for="kunde">Kunde<span class="pflicht" aria-hidden="true">*</span></label>
+                <select id="kunde" name="kundeId" required aria-describedby="kunde-hinweis"
+                        th:aria-invalid="${fehler != null and kundeId == null} ? 'true'">
+                    <option value="">Bitte auswählen …</option>
+                    <option th:each="k : ${kunden}" th:value="${k.id}" th:selected="${k.id == kundeId}"
+                            th:text="${k.nachname} + ', ' + ${k.vorname} + (${k.firma} != null ? ' – ' + ${k.firma} : '') + ' (' + ${k.kundennummer} + ')'">
+                        Mustermann, Max (K-1001)</option>
+                </select>
+                <p class="feld-hinweis" id="kunde-hinweis">
+                    Kunde noch nicht vorhanden?
+                    <a th:href="@{/kunden/neu(maschineId=${maschine.id}, von=${von}, bis=${bis})}">Neuen Kunden anlegen</a>
+                </p>
+            </div>
+
+            <div class="formular-fuss">
+                <a class="btn btn-zweit" th:href="@{/suche(von=${von}, bis=${bis})}">
+                    <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#zurueck"/></svg>
+                    Zurück zur Suche
+                </a>
+                <button class="btn btn-primaer btn-gross" type="submit">
+                    <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#schild"/></svg>
+                    Verbindlich reservieren
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
