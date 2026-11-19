@@ -29,8 +29,8 @@ jobs:
         working-directory: maschinenverleih
 
     # Eigene, leere PostgreSQL nur für diesen Testlauf (wird danach weggeworfen).
-    # Der Test "contextLoads" startet die komplette App inkl. schema.sql und data.sql
-    # und prüft damit auch, ob unsere SQL-Skripte fehlerfrei laufen.
+    # Die Tabellen legt NICHT die Anwendung an, sondern ein eigener Schritt unten
+    # mit unseren SQL-Skripten (db/schema.sql, db/data.sql) - genau wie auf dem Server.
     # Die Zugangsdaten sind reine Wegwerf-Werte, KEINE echten Passwörter.
     services:
       postgres:
@@ -65,6 +65,15 @@ jobs:
           distribution: temurin
           java-version: "25"
           cache: maven
+
+      - name: Testdatenbank mit unseren SQL-Skripten einrichten
+        # Explizit und sichtbar: erst Schema/Tabellen, dann Beispieldaten.
+        # ON_ERROR_STOP=1 -> ein Fehler im Skript lässt den Lauf sofort rot werden.
+        env:
+          PGPASSWORD: test
+        run: |
+          psql -h localhost -U test -d postgres -v ON_ERROR_STOP=1 -f db/schema.sql
+          psql -h localhost -U test -d postgres -v ON_ERROR_STOP=1 -f db/data.sql
 
       - name: Maven-Wrapper ausführbar machen
         run: chmod +x mvnw
