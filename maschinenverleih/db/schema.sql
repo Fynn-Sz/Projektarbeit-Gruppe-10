@@ -3,6 +3,8 @@
 --   Server:  als Schema-Besitzer (fynn) z. B. in DataGrip oder psql
 --   CI:      eigener Schritt in .github/workflows/test.yml (psql -f db/schema.sql)
 -- "IF NOT EXISTS" sorgt dafuer, dass vorhandene Tabellen und Daten erhalten bleiben.
+-- Spaetere Aenderungen am Schema stehen NICHT hier, sondern als nummerierte Skripte in db/migrationen/
+-- (z. B. 001_kunde_altdaten.sql) und werden danach der Nummer nach ausgefuehrt.
 
 CREATE SCHEMA IF NOT EXISTS maschinenverleih;
 SET search_path TO maschinenverleih;

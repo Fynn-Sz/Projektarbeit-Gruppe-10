@@ -71,8 +71,8 @@
                         th:aria-invalid="${fehler != null and kundeId == null} ? 'true'">
                     <option value="">Bitte auswählen …</option>
                     <option th:each="k : ${kunden}" th:value="${k.id}" th:selected="${k.id == kundeId}"
-                            th:text="${k.nachname} + ', ' + ${k.vorname} + (${k.firma} != null ? ' – ' + ${k.firma} : '') + ' (' + ${k.kundennummer} + ')'">
-                        Mustermann, Max (K-1001)</option>
+                            th:text="${k.anzeigename} + ' (' + ${k.kundennummer} + ')'">
+                        Mustermann Bau GmbH (Max Mustermann) (K-0001)</option>
                 </select>
                 <p class="feld-hinweis" id="kunde-hinweis">
                     Kunde noch nicht vorhanden?

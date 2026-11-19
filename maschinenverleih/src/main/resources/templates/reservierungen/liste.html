@@ -27,7 +27,7 @@
             <select id="filter-kunde" name="kundeId">
                 <option value="">Alle Kunden</option>
                 <option th:each="k : ${kunden}" th:value="${k.id}" th:selected="${k.id == kundeId}"
-                        th:text="${k.nachname} + ', ' + ${k.vorname}">Mustermann, Max</option>
+                        th:text="${k.anzeigename} + ' (' + ${k.kundennummer} + ')'">Mustermann Bau GmbH (Max Mustermann) (K-0001)</option>
             </select>
         </div>
         <button class="btn btn-zweit" type="submit">Filtern</button>
