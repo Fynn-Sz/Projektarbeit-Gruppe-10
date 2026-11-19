@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="de" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::#seite})}">
+<head>
+    <title>Kunden-Altdaten importieren – Maschinenverleih</title>
+</head>
+<body>
+<div id="seite">
+    <nav class="brotkrumen" aria-label="Brotkrumen">
+        <ol>
+            <li><a th:href="@{/kunden}">Kunden</a></li>
+            <li aria-current="page">Altdaten importieren</li>
+        </ol>
+    </nav>
+
+    <div class="seitenkopf">
+        <div>
+            <span class="ueberzeile">Datenübernahme</span>
+            <h1>Kunden aus dem alten Excel-System übernehmen</h1>
+            <p>Laden Sie die Altdaten-Datei unverändert hoch. Die Kunden werden den Feldern des neuen Systems
+                zugeordnet und bereinigt. Fehlerhafte oder unvollständige Zeilen und Dubletten werden
+                <strong>nicht</strong> übernommen, sondern unten mit Zeilennummer aufgelistet. Der Import kann
+                gefahrlos wiederholt werden – vorhandene Kunden werden nicht doppelt angelegt.</p>
+        </div>
+    </div>
+
+    <div th:if="${fehler}" class="meldung meldung--fehler" role="alert">
+        <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#warnung"/></svg>
+        <div><strong>Import nicht möglich</strong><p th:text="${fehler}">Fehler</p></div>
+    </div>
+
+    <section th:if="${ergebnis}" aria-labelledby="ergebnis-titel" role="status">
+        <h2 id="ergebnis-titel">Importprotokoll</h2>
+        <p class="leise" th:text="'Datei: ' + ${dateiname}">Datei: altdaten.xlsx</p>
+        <div class="kennzahlen">
+            <div class="kennzahl">
+                <span class="kennzahl-wert" th:text="${ergebnis.importiert}">100</span>
+                <span class="kennzahl-name">neu angelegt</span>
+            </div>
+            <div class="kennzahl">
+                <span class="kennzahl-wert" th:text="${ergebnis.bereitsVorhanden}">0</span>
+                <span class="kennzahl-name">bereits vorhanden</span>
+            </div>
+            <div class="kennzahl">
+                <span class="kennzahl-wert" th:text="${#lists.size(ergebnis.dubletten)}">8</span>
+                <span class="kennzahl-name">Dubletten, nicht angelegt</span>
+            </div>
+            <div class="kennzahl">
+                <span class="kennzahl-wert" th:text="${#lists.size(ergebnis.fehler)}">3</span>
+                <span class="kennzahl-name">fehlerhaft, nicht angelegt</span>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(ergebnis.fehler) and #lists.isEmpty(ergebnis.dubletten)}" class="meldung meldung--erfolg">
+            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#haken"/></svg>
+            <p>Alle Zeilen wurden übernommen oder waren bereits vorhanden.</p>
+        </div>
+
+        <div class="tabelle-rahmen" th:unless="${#lists.isEmpty(ergebnis.fehler)}" style="margin-bottom:2rem">
+            <table class="tabelle">
+                <caption>Nicht übernommen – bitte prüfen: in Excel korrigieren und erneut importieren oder von Hand anlegen.</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="knapp">Excel-Zeile</th>
+                    <th scope="col" class="knapp">Kunden-Nr.</th>
+                    <th scope="col">Problem</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="f : ${ergebnis.fehler}">
+                    <td class="mono" th:text="${f.zeile}">31</td>
+                    <td class="mono" th:text="${f.kundennummer} ?: '–'">K-1030</td>
+                    <td th:text="${f.meldung}">Anschrift unvollständig</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tabelle-rahmen" th:unless="${#lists.isEmpty(ergebnis.dubletten)}" style="margin-bottom:2rem">
+            <table class="tabelle">
+                <caption>Dubletten – nicht angelegt, weil der Kunde schon vorhanden ist. Abweichende Angaben (z. B. eine
+                    weitere Telefonnummer) ggf. beim vorhandenen Kunden nachtragen.</caption>
+                <thead>
+                <tr>
+                    <th scope="col" class="knapp">Excel-Zeile</th>
+                    <th scope="col" class="knapp">Kunden-Nr.</th>
+                    <th scope="col">Grund</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="d : ${ergebnis.dubletten}">
+                    <td class="mono" th:text="${d.zeile}">112</td>
+                    <td class="mono" th:text="${d.kundennummer} ?: '–'">K-1111</td>
+                    <td th:text="${d.meldung}">Vermutlich Dublette von K-1036</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <details th:unless="${#lists.isEmpty(ergebnis.hinweise)}" style="margin-bottom:2rem">
+            <summary style="cursor:pointer; font-weight:600; margin-bottom:.75rem"
+                     th:text="${#lists.size(ergebnis.hinweise)} + ' übernommene Kunden mit Korrekturen oder Hinweisen anzeigen'">
+                Hinweise anzeigen</summary>
+            <div class="tabelle-rahmen">
+                <table class="tabelle">
+                    <caption>Diese Kunden wurden angelegt, beim Aufbereiten aber korrigiert oder ergänzt.</caption>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="knapp">Excel-Zeile</th>
+                        <th scope="col" class="knapp">Kunden-Nr.</th>
+                        <th scope="col">Hinweis</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="h : ${ergebnis.hinweise}">
+                        <td class="mono" th:text="${h.zeile}">3</td>
+                        <td class="mono" th:text="${h.kundennummer}">K-1002</td>
+                        <td th:text="${h.meldung}">Ort 'Remschied' korrigiert zu 'Remscheid'</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </details>
+
+        <div class="aktionen" style="margin-bottom:2.5rem">
+            <a class="btn btn-primaer" th:href="@{/kunden}">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#liste"/></svg>
+                Zur Kundenliste
+            </a>
+        </div>
+    </section>
+
+    <div class="raster raster-seite">
+        <form class="karte karte--akzent" th:action="@{/kunden/import}" method="post" enctype="multipart/form-data"
+              aria-labelledby="hochladen-titel">
+            <h2 id="hochladen-titel" th:text="${ergebnis} ? 'Erneut importieren' : 'Datei hochladen'">Datei hochladen</h2>
+            <label class="ablage" for="datei">
+                <span class="ablage-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#tabelle"/></svg></span>
+                <span><strong>Excel-Datei auswählen</strong> oder hierher ziehen</span>
+                <span class="sehr-leise">.xlsx, höchstens 5 MB</span>
+                <span class="ablage-datei" aria-live="polite"></span>
+                <input type="file" id="datei" name="datei" required
+                       accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+            </label>
+            <div class="formular-fuss">
+                <span class="sehr-leise">Gespeichert wird jede gültige Zeile – fehlerhafte und doppelte nicht.</span>
+                <button class="btn btn-primaer" type="submit">
+                    <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#upload"/></svg>
+                    Importieren
+                </button>
+            </div>
+        </form>
+
+        <section class="karte" aria-labelledby="regeln-titel">
+            <h2 id="regeln-titel">So werden die Altdaten übernommen</h2>
+            <p class="leise">Gesucht wird das Tabellenblatt mit den Spalten <strong>KdNr</strong>,
+                <strong>Kunde / Ansprechpartner</strong> und <strong>Adresse</strong> (optional Telefon, E-Mail,
+                Kundentyp, Kunde seit, Anmerkung).</p>
+            <div class="tabelle-rahmen">
+                <table class="tabelle">
+                    <thead><tr><th scope="col">Altdaten</th><th scope="col">Neues System</th></tr></thead>
+                    <tbody>
+                    <tr><td>„Dachdecker Hartmann UG, Frau Hartmann“</td><td>Firma + Ansprechpartner (Anrede Frau, Nachname)</td></tr>
+                    <tr><td>„42859 Remscheid, Nordring 25“</td><td>Straße, PLZ und Ort getrennt</td></tr>
+                    <tr><td>Bekannte Schreibfehler („Remschied“, „W-tal“)</td><td>korrigiert, im Protokoll vermerkt</td></tr>
+                    <tr><td>Mehrere Telefonnummern / E-Mails, Fax, Anmerkung</td><td>erste ins Feld, Rest in die Bemerkung</td></tr>
+                    <tr><td>Kundentyp „PK“, „privat“, „Gewerbe“, „Firma“ …</td><td>Privatkunde / Gewerbekunde</td></tr>
+                    <tr><td>Keine Kundennummer</td><td>neue Nummer, im Protokoll vermerkt</td></tr>
+                    <tr><td>Gleiche Anschrift + gleiche E-Mail oder gleicher Name</td><td>Dublette, nicht angelegt</td></tr>
+                    <tr><td>PLZ/Ort fehlen, Kundentyp passt nicht zum Namen</td><td>Fehler, nicht angelegt</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+</body>
+</html>

@@ -1,5 +1,5 @@
 -- Beispieldaten fuer die lokale Entwicklung und die CI-Testdatenbank - NICHT fuer den Server.
--- Wird bei Bedarf von Hand nach schema.sql ausgefuehrt.
+-- Wird bei Bedarf von Hand nach schema.sql und den Skripten in db/migrationen/ ausgefuehrt.
 -- "ON CONFLICT DO NOTHING": Datensaetze, die es schon gibt, werden nicht erneut eingefuegt.
 
 SET search_path TO maschinenverleih;
@@ -27,7 +27,8 @@ JOIN kategorie k ON k.name = v.kategorie
 JOIN standort s ON s.name = v.standort
 ON CONFLICT DO NOTHING;
 
-INSERT INTO kunde (kundennummer, firma, vorname, nachname, email, telefon, strasse, plz, ort, ust_id) VALUES
-    ('K-1001', 'Mustermann Bau GmbH', 'Max', 'Mustermann', 'max@mustermann-bau.de', '0521 123456',
+-- Nummer K-0001, weil K-1001 ff. die Kundennummern aus dem Altsystem sind (siehe Kunden-Import)
+INSERT INTO kunde (kundennummer, kundentyp, firma, anrede, vorname, nachname, email, telefon, strasse, plz, ort, ust_id) VALUES
+    ('K-0001', 'GEWERBE', 'Mustermann Bau GmbH', 'HERR', 'Max', 'Mustermann', 'max@mustermann-bau.de', '0521 123456',
      'Hauptstrasse 1', '33602', 'Bielefeld', 'DE123456789')
 ON CONFLICT DO NOTHING;

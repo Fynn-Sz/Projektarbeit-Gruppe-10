@@ -10,9 +10,14 @@
         <div>
             <span class="ueberzeile">Stammdaten</span>
             <h1>Kunden</h1>
-            <p>Kunden, für die reserviert werden kann. Kundennummer und E-Mail-Adresse sind eindeutig.</p>
+            <p>Kunden, für die reserviert werden kann. Kundennummer und E-Mail-Adresse sind eindeutig.
+                Jede Änderung wird im Audit-Trail protokolliert.</p>
         </div>
         <div class="aktionen">
+            <a class="btn btn-zweit" th:href="@{/kunden/import}">
+                <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#upload"/></svg>
+                Altdaten importieren
+            </a>
             <a class="btn btn-primaer" th:href="@{/kunden/neu}">
                 <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#plus"/></svg>
                 Kunde anlegen
@@ -20,15 +25,29 @@
         </div>
     </div>
 
+    <form class="filterleiste" th:action="@{/kunden}" method="get" role="search" aria-label="Kunden suchen">
+        <div class="feld" style="flex:1; max-width:28rem">
+            <label for="suche">Suche</label>
+            <input type="search" id="suche" name="suche" th:value="${suche}"
+                   placeholder="Name, Firma, Kundennummer, E-Mail, Telefon, PLZ oder Ort">
+        </div>
+        <button class="btn btn-zweit" type="submit">
+            <svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#suche"/></svg>
+            Suchen
+        </button>
+        <a class="btn btn-zweit" th:if="${!#strings.isEmpty(suche)}" th:href="@{/kunden}">Suche zurücksetzen</a>
+    </form>
+
     <div th:if="${#lists.isEmpty(kunden)}" class="leer">
         <span class="leer-icon"><svg aria-hidden="true" focusable="false"><use href="/img/icons.svg#kunden"/></svg></span>
-        <h3>Noch keine Kunden</h3>
-        <p>Legen Sie den ersten Kunden an, um Reservierungen erfassen zu können.</p>
+        <h3 th:text="${#strings.isEmpty(suche)} ? 'Noch keine Kunden' : 'Keine Kunden gefunden'">Noch keine Kunden</h3>
+        <p th:if="${#strings.isEmpty(suche)}">Legen Sie den ersten Kunden an oder übernehmen Sie die Kunden aus dem alten Excel-System.</p>
+        <p th:unless="${#strings.isEmpty(suche)}" th:text="'Für „' + ${suche} + '“ gibt es keinen Treffer.'">Kein Treffer.</p>
     </div>
 
     <div class="tabelle-rahmen" th:unless="${#lists.isEmpty(kunden)}">
         <table class="tabelle">
-            <caption th:text="${#lists.size(kunden)} + ' Kunde(n)'">2 Kunden</caption>
+            <caption th:text="${#lists.size(kunden)} + ' Kunde(n)' + (${#strings.isEmpty(suche)} ? '' : ' für „' + ${suche} + '“')">2 Kunden</caption>
             <thead>
             <tr>
                 <th scope="col">Kunden-Nr.</th>
@@ -39,21 +58,28 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="k : ${kunden}">
-                <td class="mono" th:text="${k.kundennummer}">K-1001</td>
+            <tr th:each="k : ${kunden}" th:with="person=${(k.anrede != null ? k.anrede.bezeichnung + ' ' : '') + (k.vorname != null ? k.vorname + ' ' + k.nachname : k.nachname)}">
                 <td>
-                    <span class="zelle-titel" th:text="${k.vorname} + ' ' + ${k.nachname}">Max Mustermann</span>
-                    <span class="zelle-unter" th:if="${k.firma}" th:text="${k.firma}">Mustermann Bau GmbH</span>
+                    <span class="mono" th:text="${k.kundennummer}">K-1001</span>
+                    <span class="zelle-unter" th:text="${k.kundentyp.bezeichnung}">Gewerbekunde</span>
                 </td>
                 <td>
-                    <a th:href="'mailto:' + ${k.email}" th:text="${k.email}">max@example.de</a>
-                    <span class="zelle-unter" th:if="${k.telefon}" th:text="${k.telefon}">0521 123456</span>
+                    <span class="zelle-titel" th:text="${k.firma != null} ? ${k.firma} : ${person}">Max Mustermann</span>
+                    <span class="zelle-unter" th:if="${k.firma != null}" th:text="'Ansprechpartner: ' + ${person}">Ansprechpartner: Frau Krause</span>
+                    <span class="zelle-unter" th:if="${k.bemerkung != null}" th:text="${k.bemerkung}" th:title="${k.bemerkung}"
+                          style="max-width:22rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">Bemerkung</span>
+                </td>
+                <td>
+                    <a th:if="${k.email != null}" th:href="'mailto:' + ${k.email}" th:text="${k.email}">max@example.de</a>
+                    <span class="zelle-unter" th:if="${k.telefon != null}" th:text="${k.telefon}">0521 123456</span>
                 </td>
                 <td>
                     <span class="zelle-titel" th:text="${k.strasse}" style="font-weight:400">Hauptstraße 1</span>
                     <span class="zelle-unter" th:text="${k.plz} + ' ' + ${k.ort}">33602 Bielefeld</span>
                 </td>
                 <td class="knapp">
+                    <a class="btn btn-zweit btn-klein" th:href="@{/kunden/{id}/bearbeiten(id=${k.id})}"
+                       th:aria-label="'Kunde ' + ${k.kundennummer} + ' bearbeiten'">Bearbeiten</a>
                     <a class="btn btn-zweit btn-klein" th:href="@{/reservierungen(kundeId=${k.id})}">Reservierungen</a>
                 </td>
             </tr>
