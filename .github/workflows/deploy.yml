@@ -7,6 +7,7 @@
 #    1. Docker-Image aus maschinenverleih/Dockerfile bauen
 #    2. Image in die GitHub Container Registry (ghcr.io) hochladen
 #    3. Per SSH auf den Server: neues Image holen und Container neu starten
+#    4. Gesundheitscheck: antwortet die App wirklich? Sonst wird der Lauf rot
 #
 #  Voraussetzungen (einmalig einzurichten):
 #
@@ -111,3 +112,20 @@ jobs:
             docker compose up -d
             docker image prune -f
             docker compose ps
+
+            # --- Gesundheitscheck ---------------------------------------------
+            # "docker compose up" meldet nur "Container gestartet" - nicht, ob
+            # Spring Boot darin auch hochfaehrt. Deshalb fragen wir die App bis
+            # zu 90 Sekunden lang ab (18 Versuche x 5 s), so wie ein Browser.
+            echo "Gesundheitscheck: warte auf Antwort von http://127.0.0.1:8080/ ..."
+            for versuch in $(seq 1 18); do
+              if curl -sf --max-time 5 -o /dev/null http://127.0.0.1:8080/; then
+                echo "OK: Anwendung antwortet (Versuch $versuch)"
+                exit 0
+              fi
+              sleep 5
+            done
+            echo "FEHLER: Anwendung antwortet nach 90 Sekunden nicht."
+            echo "Letzte Log-Zeilen des Containers:"
+            docker compose logs --tail 60 app
+            exit 1

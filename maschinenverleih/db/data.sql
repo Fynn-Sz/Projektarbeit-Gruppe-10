@@ -1,5 +1,8 @@
--- für die lokale Entwicklung
--- "ON CONFLICT DO NOTHING": Datensaetze, die es schon gibt, werden beim naechsten Start nicht erneut eingefuegt.
+-- Beispieldaten fuer die lokale Entwicklung und die CI-Testdatenbank - NICHT fuer den Server.
+-- Wird bei Bedarf von Hand nach schema.sql ausgefuehrt.
+-- "ON CONFLICT DO NOTHING": Datensaetze, die es schon gibt, werden nicht erneut eingefuegt.
+
+SET search_path TO maschinenverleih;
 
 INSERT INTO kategorie (name) VALUES
     ('Bagger'), ('Verdichter'), ('Arbeitsbuehne'), ('Radlader')
